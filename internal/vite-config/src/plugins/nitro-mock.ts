@@ -5,7 +5,16 @@ import type { NitroMockPluginOptions } from '../typing';
 import { colors, consola, getPackage } from '@vben/node-utils';
 
 import getPort from 'get-port';
-import { build, createDevServer, createNitro, prepare } from 'nitropack';
+type NitroPackModule = typeof import('nitropack');
+
+let nitroPackModulePromise: Promise<NitroPackModule> | null = null;
+
+const loadNitroPackModule = async () => {
+  if (!nitroPackModulePromise) {
+    nitroPackModulePromise = import('nitropack') as Promise<NitroPackModule>;
+  }
+  return nitroPackModulePromise;
+};
 
 const hmrKeyRe = /^runtimeConfig\.|routeRules\./;
 
@@ -47,6 +56,8 @@ export const viteNitroMockPlugin = ({
 
 async function runNitroServer(rootDir: string, port: number, verbose: boolean) {
   let nitro: any;
+  const { build, createDevServer, createNitro, prepare } =
+    await loadNitroPackModule();
   const reload = async () => {
     if (nitro) {
       consola.info('Restarting dev server...');
